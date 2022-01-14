@@ -1,0 +1,24 @@
+{
+    "collectordata": [
+        {
+            "name": "123@yahoo.com",
+            "budget": 100
+        },
+        {
+            "name": "456@yahoo.com",
+            "budget": 100
+        },
+        {
+            "name": "prime@yahoo.com",
+            "budget": 100
+        },
+        {
+            "name": "odd@yahoo.com",
+            "budget": 100
+        },
+        {
+            "name": "even@yahoo.com",
+            "budget": 100
+        }
+    ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "card-collector-database",
+  "version": "1.0.0",
+  "description": "pokemon card collector project",
+  "main": "app.js",
+  "scripts": {
+    "test": "jest", 
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/only1finesse/card-collector-database.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/only1finesse/card-collector-database/issues"
+  },
+  "homepage": "https://github.com/only1finesse/card-collector-database#readme",
+  "dependencies": {
+    "express": "^4.17.2",
+    "jest": "^27.4.7",
+    "nodemon": "^2.0.15",
+    "sequelize": "^6.13.0",
+    "sqlite3": "^5.0.2"
+  }
+}
