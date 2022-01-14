@@ -82,19 +82,20 @@ app.delete('/collectors/:id', async (req, res) => {
 
 
 const generateRandomIndex = () => {
-    numArray = []; 
-    nums = 5; 
-    
-    for (let i = 0; i < nums; i++) {
-        newNum = Math.floor(Math.random()*21)
-        if (!numArray.includes(newNum)){
-            newNum = Math.floor(Math.random()*21)
+    const numArray = []; 
+    let numCount = 0; 
+    let newNum = Math.floor(Math.random()*21) + 1
+    while (numCount < 5) {
+        if (numArray.includes(newNum)){
+            newNum = Math.floor(Math.random()*21) + 1
+        } else {
+            numArray.push(newNum)
+            numCount++
         }
-        numArray.push(newNum)
     }
     return numArray; 
 }
-// console.log(generateRandomIndex())
+console.log(generateRandomIndex())
 
 // generate 5 random cards for collector
 app.put('/collectors/:collectorid/generate-pack', async(req, res) => {
