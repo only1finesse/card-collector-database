@@ -3,6 +3,7 @@ const { Card, Collector } = require('./models/Index');
 const { sequelize } = require('./db');
 const seed = require('./seed');
 const Op = require('sequelize').Op;
+const { count } = require('console');
 
 const app = express();
 const port = 3000;
@@ -20,7 +21,7 @@ app.get('/', async (req, res) => {
 // retrieve all cards in the database
 app.get('/cards', async (req, res) => {
     const cards = await Card.findAll();
-    res.send({cards})
+    res.send({ cards })
 })
 
 // retrieve a specific card in the database ---> id
@@ -53,13 +54,13 @@ app.get('/collectors/:id', async (req, res) => {
 })
 
 // add a new card
-app.post('/cards/', async (req, res) => {
+app.post('/cards/addcard', async (req, res) => {
     const newCard = await Card.create(req.body)
     res.send({ newCard })
 })
 
 // add a new collector
-app.post('/collectors/', async (req, res) => {
+app.post('/collectors/addcollector', async (req, res) => {
     const newCollector = await Collector.create(req.body)
     res.send({ newCollector })
 })
@@ -80,45 +81,121 @@ app.delete('/collectors/:id', async (req, res) => {
     res.send(`Collector Deleted`)
 })
 
-
+// generate 5 random indexes for cards id 
 const generateRandomIndex = () => {
-    const numArray = []; 
-    let numCount = 0; 
-    let newNum = Math.floor(Math.random()*21) + 1
+    const numArray = [];
+    let numCount = 0;
+    let newNum = Math.ceil(Math.random() * 21)
     while (numCount < 5) {
-        if (numArray.includes(newNum)){
-            newNum = Math.floor(Math.random()*21) + 1
+        if (numArray.includes(newNum)) {
+            newNum = Math.ceil(Math.random() * 21)
         } else {
             numArray.push(newNum)
             numCount++
         }
     }
-    return numArray; 
+    return numArray;
 }
 console.log(generateRandomIndex())
 
 // generate 5 random cards for collector
-app.put('/collectors/:collectorid/generate-pack', async(req, res) => {
+app.put('/collectors/:collectorid/generate-pack', async (req, res) => {
     const collectorid = req.params.collectorid
-    const cardIndexes = await generateRandomIndex()
-    await cardIndexes.forEach(index => {
-        Card.update({CollectorId: collectorid}, {
-            where: {id: index}
-        })
-    });
-    const collectorsPack = await Card.findAll({where: {
-        CollectorId: collectorid
-    }})
+    let cardIndexes = await generateRandomIndex()
+    let count = 0
+    while (count < 5) {
+        let idFromDb = await Card.findByPk(cardIndexes[count])
+        if (idFromDb.CollectorId === null) {
+            Card.update({ CollectorId: collectorid }, {
+                where: { id: cardIndexes[count] }
+            })
+            count++
+        } else {
+            cardIndexes[count] = Math.ceil(Math.random() * 21) 
+        }
+    }
+    const collectorsPack = await Card.findAll({
+        where: {
+            CollectorId: collectorid
+        }
+    })
     res.send(collectorsPack)
 })
 
 // get collectors cards ---> id
-app.get('/collectors/:collectorid/cards', async(req, res) => {
-    collectorid = req.params.collectorid; 
-    const collectorsCards = await Card.findAll({where: {
-        CollectorId: collectorid
-    }})
-    res.send({collectorsCards})
+app.get('/collectors/:collectorid/cards', async (req, res) => {
+    collectorid = req.params.collectorid;
+    const collectorsCards = await Card.findAll({
+        where: {
+            CollectorId: collectorid
+        }
+    })
+    res.send({ collectorsCards })
 })
 
+// buy card
+app.put('/collectors/:collectorid/buycard/:cardid', async(req, res) => {
+    const collectorid = req.params.collectorid; 
+    const cardid = req.params.cardid; 
+    const card = await Card.findByPk(cardid)
+    const collector = await Collector.findByPk(collectorid)
+
+    if((card.CollectorId === null) && (card.CollectorId !== collector.id) ) {
+        if (collector.budget >= card.price) {
+            await Collector.update({ budget: collector.budget - card.price }, {where: {
+                id: collectorid
+            }})
+            await collector.addCard(card)
+            res.send(`Card Purchased!`)
+        } else {
+            res.send(`Insufficent balance in your wallet`)
+        }
+    } else {
+        res.send(`card not available in stock`)
+    }
+})
+
+// sell card 
+app.put('/collectors/:collectorid/sellcard/:cardid', async(req, res) => {
+    const collectorid = req.params.collectorid; 
+    const cardid = req.params.cardid; 
+    const card = await Card.findByPk(cardid)
+    const collector = await Collector.findByPk(collectorid)
+
+    // console.log(card.CollectorId, collector.id)
+
+    if (card.CollectorId === collector.id) {
+        await Collector.update({ budget: collector.budget + card.price }, {where: {
+            id: collectorid
+        }})
+        await Card.update({CollectorId: null}, {where: {
+            id: cardid
+        }})
+        res.send(`Card Sold for $${card.price}`)
+    } else {
+        res.send(`this card is not yours to sell`)
+    }
+})
+
+//trade card 
+app.put('/collectors/trade/:traderid/:traderscard/:buyerid/:buyerscard', async(req, res) => {
+    traderid = req.params.traderid
+    buyerid = req.params.buyerid 
+    traderscard = await Card.findByPk((req.params.traderscard))
+    buyerscard = await Card.findByPk((req.params.buyerscard))
+    trader = await Collector.findByPk(traderid)
+    buyer = await Collector.findByPk(buyerid)
+
+    // console.log(`${typeof(buyerscard.CollectorId)} --> ${typeof(buyerid)} : ${buyerscard.CollectorId === buyerid}`)
+
+    // console.log(`${typeof(traderscard.CollectorId)} --> ${typeof(traderid)} : : ${traderscard.CollectorId === traderid}`)
+
+    if ((buyerscard.CollectorId === buyer.id) && (traderscard.CollectorId === trader.id)) {
+        trader.addCard(buyerscard)
+        buyer.addCard(traderscard)
+        res.send(`Trade Succesful!`)
+    } else {
+        res.send('Trade Unsuccesful, check inventory')
+    }
+})
 
