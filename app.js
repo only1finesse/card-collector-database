@@ -188,7 +188,7 @@ app.put('/collectors/trade/:traderid/:traderscard/:buyerid/:buyerscard', async(r
 
     // console.log(`${typeof(buyerscard.CollectorId)} --> ${typeof(buyerid)} : ${buyerscard.CollectorId === buyerid}`)
 
-    // console.log(`${typeof(traderscard.CollectorId)} --> ${typeof(traderid)} : : ${traderscard.CollectorId === traderid}`)
+    // console.log(`${typeof(traderscard.CollectorId)} --> ${typeof(traderid)} : ${traderscard.CollectorId === traderid}`)
 
     if ((buyerscard.CollectorId === buyer.id) && (traderscard.CollectorId === trader.id)) {
         trader.addCard(buyerscard)
